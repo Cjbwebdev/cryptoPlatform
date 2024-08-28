@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Top 100 Cryptocurrencies</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Top 100 Cryptocurrencies</h1>
+        <table class="min-w-full bg-white border border-gray-200 mb-4">
+            <thead>
+                <tr class="border-b">
+                    <th class="px-4 py-2">Rank</th>
+                    <th class="px-4 py-2">Name</th>
+                    <th class="px-4 py-2">Symbol</th>
+                    <th class="px-4 py-2">Price (USD)</th>
+                    <th class="px-4 py-2">Market Cap</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for crypto in page_obj %}
+                <tr onclick="loadChart('{{ crypto.id }}')" class="cursor-pointer hover:bg-gray-100">
+                    <td class="px-4 py-2">{{ forloop.counter }}</td>
+                    <td class="px-4 py-2">{{ crypto.name }}</td>
+                    <td class="px-4 py-2">{{ crypto.symbol }}</td>
+                    <td class="px-4 py-2">${{ crypto.current_price }}</td>
+                    <td class="px-4 py-2">${{ crypto.market_cap }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-2 text-center">No data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        <div class="flex justify-between mb-4">
+            <div>
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" class="p-2 bg-blue-500 text-white rounded">First</a>
+                    <a href="?page={{ page_obj.previous_page_number }}" class="p-2 bg-blue-500 text-white rounded">Previous</a>
+                {% endif %}
+            </div>
+            <div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="p-2 bg-blue-500 text-white rounded">Next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}" class="p-2 bg-blue-500 text-white rounded">Last</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Time frame buttons -->
+        <div id="timeframes" class="my-4">
+            <button onclick="changeTimeFrame('1m')" class="p-2 bg-blue-500 text-white rounded">1M</button>
+            <button onclick="changeTimeFrame('5m')" class="p-2 bg-blue-500 text-white rounded">5M</button>
+            <button onclick="changeTimeFrame('15m')" class="p-2 bg-blue-500 text-white rounded">15M</button>
+            <button onclick="changeTimeFrame('1h')" class="p-2 bg-blue-500 text-white rounded">1H</button>
+            <button onclick="changeTimeFrame('4h')" class="p-2 bg-blue-500 text-white rounded">4H</button>
+            <button onclick="changeTimeFrame('12h')" class="p-2 bg-blue-500 text-white rounded">12H</button>
+            <button onclick="changeTimeFrame('1d')" class="p-2 bg-blue-500 text-white rounded">1D</button>
+            <button onclick="changeTimeFrame('7d')" class="p-2 bg-blue-500 text-white rounded">7D</button>
+            <button onclick="changeTimeFrame('30d')" class="p-2 bg-blue-500 text-white rounded">30D</button>
+            <button onclick="changeTimeFrame('90d')" class="p-2 bg-blue-500 text-white rounded">90D</button>
+            <button onclick="changeTimeFrame('365d')" class="p-2 bg-blue-500 text-white rounded">1Y</button>
+        </div>
+
+        <!-- Chart canvas -->
+        <canvas id="cryptoChart" width="400" height="200"></canvas>
+
+        <!-- Toggle buttons -->
+        <div class="my-4">
+            <label class="inline-flex items-center mr-4">
+                <input type="checkbox" id="showPrice" class="form-checkbox" checked>
+                <span class="ml-2">Show Price</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="showVolume" class="form-checkbox" checked>
+                <span class="ml-2">Show Volume</span>
+            </label>
+            <!-- Add RSI toggle if you implement RSI data -->
+            <!--
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="showRSI" class="form-checkbox">
+                <span class="ml-2">Show RSI</span>
+            </label>
+            -->
+        </div>
+    </div>
+
+    <script>
+        var ctx = document.getElementById('cryptoChart').getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],  // Will be updated dynamically
+                datasets: [{
+                    label: 'Price',
+                    data: [],  // Will be updated dynamically
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Volume',
+                    data: [],  // Will be updated dynamically
+                    borderColor: 'rgb(153, 102, 255)',
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Price (USD)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Volume'
+                        }
+                    }
+                }
+            }
+        });
+
+        var currentCryptoId = null;
+        var currentTimeFrame = '1d';  // Default time frame
+
+        function loadChart(cryptoId) {
+            currentCryptoId = cryptoId;
+            fetchChartData(cryptoId, currentTimeFrame); // Fetch data for current time frame
+            document.getElementById('timeframes').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function changeTimeFrame(timeFrame) {
+            currentTimeFrame = timeFrame;
+            if (currentCryptoId) {
+                fetchChartData(currentCryptoId, timeFrame);
+            }
+        }
+
+        function fetchChartData(cryptoId, timeFrame) {
+            fetch(`/crypto/chart-data/${cryptoId}/${timeFrame}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !data.labels) {
+                        console.warn("No data available for this timeframe.");
+                        return;
+                    }
+                    chart.data.labels = data.labels.map(timestamp => {
+                        let date = new Date(timestamp);
+                        return date.toLocaleDateString(); // Adjust format if needed
+                    });
+                    chart.data.datasets[0].data = data.prices || [];
+                    chart.data.datasets[1].data = data.volumes || [];
+                    chart.update();
+                })
+                .catch(error => console.error('Error fetching chart data:', error));
+        }
+
+        // Toggle visibility
+        document.getElementById('showPrice').addEventListener('change', updateChartVisibility);
+        document.getElementById('showVolume').addEventListener('change', updateChartVisibility);
+        // Add RSI toggle if you implement RSI data
+        // document.getElementById('showRSI').addEventListener('change', updateChartVisibility);
+
+        function updateChartVisibility() {
+            chart.data.datasets[0].hidden = !document.getElementById('showPrice').checked;
+            chart.data.datasets[1].hidden = !document.getElementById('showVolume').checked;
+            // Add RSI visibility control if needed
+            // chart.data.datasets[2].hidden = !document.getElementById('showRSI').checked;
+            chart.update();
+        }
+
+        // Initial chart setup
+        updateChartVisibility();
+
+        // Scroll to top on page load
+        window.onload = function() {
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
