@@ -1,35 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Top 100 Cryptocurrencies</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
 </head>
+
 <body class="bg-gray-100 text-gray-900">
     <div class="container mx-auto p-4">
         <h1 class="text-3xl font-bold mb-4">Top 100 Cryptocurrencies</h1>
-        <table class="min-w-full bg-white border border-gray-200 mb-4">
+        <table class="min-w-full bg-white border border-gray-200 mb-4 rounded-lg shadow-sm">
             <thead>
-                <tr class="border-b">
-                    <th class="px-4 py-2">Rank</th>
-                    <th class="px-4 py-2">Name</th>
-                    <th class="px-4 py-2">Symbol</th>
-                    <th class="px-4 py-2">Price (USD)</th>
-                    <th class="px-4 py-2">Market Cap</th>
+                <tr class="border-b bg-gray-50">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Symbol</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Price (USD)</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Market Cap</th>
                 </tr>
             </thead>
             <tbody>
                 {% for crypto in page_obj %}
-                <tr onclick="loadChart('{{ crypto.id }}')" class="cursor-pointer hover:bg-gray-100">
-                    <td class="px-4 py-2">{{ forloop.counter }}</td>
-                    <td class="px-4 py-2">{{ crypto.name }}</td>
-                    <td class="px-4 py-2">{{ crypto.symbol }}</td>
-                    <td class="px-4 py-2">${{ crypto.current_price }}</td>
-                    <td class="px-4 py-2">${{ crypto.market_cap }}</td>
+                <tr onclick="loadChart('{{ crypto.id }}', '{{ crypto.name }}')" class="cursor-pointer hover:bg-yellow-100">
+                    <td class="px-4 py-2 text-lg font-semibold text-gray-800 hover:text-teal-500">{{ forloop.counter }}</td>
+                    <td class="px-4 py-2 text-lg font-semibold text-gray-800 hover:text-teal-500">{{ crypto.name }}</td>
+                    <td class="px-4 py-2 text-lg font-semibold text-gray-800 hover:text-teal-500">{{ crypto.symbol }}</td>
+                    <td class="px-4 py-2 text-lg font-semibold text-gray-800 hover:text-teal-500">${{ crypto.current_price }}</td>
+                    <td class="px-4 py-2 text-lg font-semibold text-gray-800 hover:text-teal-500">${{ crypto.market_cap }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="px-4 py-2 text-center">No data available</td>
+                    <td colspan="5" class="px-4 py-2 text-center text-lg text-gray-500">No data available</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -39,53 +44,39 @@
         <div class="flex justify-between mb-4">
             <div>
                 {% if page_obj.has_previous %}
-                    <a href="?page=1" class="p-2 bg-blue-500 text-white rounded">First</a>
-                    <a href="?page={{ page_obj.previous_page_number }}" class="p-2 bg-blue-500 text-white rounded">Previous</a>
+                <a href="?page=1" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Previous</a>
                 {% endif %}
             </div>
             <div>
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="p-2 bg-blue-500 text-white rounded">Next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}" class="p-2 bg-blue-500 text-white rounded">Last</a>
+                <a href="?page={{ page_obj.next_page_number }}" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="p-2 bg-blue-500 text-white rounded hover:bg-blue-600">Last</a>
                 {% endif %}
             </div>
         </div>
 
         <!-- Time frame buttons -->
-        <div id="timeframes" class="my-4">
-            <button onclick="changeTimeFrame('1m')" class="p-2 bg-blue-500 text-white rounded">1M</button>
-            <button onclick="changeTimeFrame('5m')" class="p-2 bg-blue-500 text-white rounded">5M</button>
-            <button onclick="changeTimeFrame('15m')" class="p-2 bg-blue-500 text-white rounded">15M</button>
-            <button onclick="changeTimeFrame('1h')" class="p-2 bg-blue-500 text-white rounded">1H</button>
-            <button onclick="changeTimeFrame('4h')" class="p-2 bg-blue-500 text-white rounded">4H</button>
-            <button onclick="changeTimeFrame('12h')" class="p-2 bg-blue-500 text-white rounded">12H</button>
-            <button onclick="changeTimeFrame('1d')" class="p-2 bg-blue-500 text-white rounded">1D</button>
-            <button onclick="changeTimeFrame('7d')" class="p-2 bg-blue-500 text-white rounded">7D</button>
-            <button onclick="changeTimeFrame('30d')" class="p-2 bg-blue-500 text-white rounded">30D</button>
-            <button onclick="changeTimeFrame('90d')" class="p-2 bg-blue-500 text-white rounded">90D</button>
-            <button onclick="changeTimeFrame('365d')" class="p-2 bg-blue-500 text-white rounded">1Y</button>
+        <div id="timeframes" class="my-4 space-x-2">
+            <!-- Time frame buttons here -->
         </div>
 
         <!-- Chart canvas -->
-        <canvas id="cryptoChart" width="400" height="200"></canvas>
+        <div class="bg-white p-4 rounded-lg shadow-sm">
+            <canvas id="cryptoChart" width="400" height="200"></canvas>
+        </div>
 
         <!-- Toggle buttons -->
         <div class="my-4">
-            <label class="inline-flex items-center mr-4">
-                <input type="checkbox" id="showPrice" class="form-checkbox" checked>
-                <span class="ml-2">Show Price</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="showVolume" class="form-checkbox" checked>
-                <span class="ml-2">Show Volume</span>
-            </label>
-            <!-- Add RSI toggle if you implement RSI data -->
-            <!--
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="showRSI" class="form-checkbox">
-                <span class="ml-2">Show RSI</span>
-            </label>
-            -->
+            <!-- Toggle buttons here -->
+        </div>
+
+        <!-- News Section -->
+        <div id="newsSection" class="my-4">
+            <h2 class="text-2xl font-bold mb-4">Latest News</h2>
+            <div id="newsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- News articles will be dynamically added here -->
+            </div>
         </div>
     </div>
 
@@ -94,18 +85,22 @@
         var chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],  // Will be updated dynamically
+                labels: [],
                 datasets: [{
                     label: 'Price',
-                    data: [],  // Will be updated dynamically
+                    data: [],
                     borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4,
+                    fill: true,
                 },
                 {
                     label: 'Volume',
-                    data: [],  // Will be updated dynamically
+                    data: [],
                     borderColor: 'rgb(153, 102, 255)',
-                    tension: 0.1,
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    tension: 0.4,
+                    fill: true,
                     yAxisID: 'y1'
                 }]
             },
@@ -114,7 +109,12 @@
                     y: {
                         title: {
                             display: true,
-                            text: 'Price (USD)'
+                            text: 'Price (USD)',
+                            color: 'rgb(75, 192, 192)',
+                        },
+                        grid: {
+                            display: true,
+                            borderColor: 'rgba(75, 192, 192, 0.1)'
                         }
                     },
                     y1: {
@@ -122,7 +122,11 @@
                         position: 'right',
                         title: {
                             display: true,
-                            text: 'Volume'
+                            text: 'Volume',
+                            color: 'rgb(153, 102, 255)'
+                        },
+                        grid: {
+                            display: false,
                         }
                     }
                 }
@@ -130,12 +134,15 @@
         });
 
         var currentCryptoId = null;
-        var currentTimeFrame = '1d';  // Default time frame
+        var currentCryptoName = null;
+        var currentTimeFrame = '365d';  // Default time frame
 
-        function loadChart(cryptoId) {
+        function loadChart(cryptoId, cryptoName) {
             currentCryptoId = cryptoId;
+            currentCryptoName = cryptoName;
             fetchChartData(cryptoId, currentTimeFrame); // Fetch data for current time frame
-            document.getElementById('timeframes').scrollIntoView({behavior: 'smooth'});
+            fetchNews(cryptoName); // Fetch news for the selected crypto
+            document.getElementById('timeframes').scrollIntoView({ behavior: 'smooth' });
         }
 
         function changeTimeFrame(timeFrame) {
@@ -146,6 +153,11 @@
         }
 
         function fetchChartData(cryptoId, timeFrame) {
+            if (!cryptoId || !timeFrame) {
+                console.error('Invalid parameters for chart data');
+                return;
+            }
+
             fetch(`/crypto/chart-data/${cryptoId}/${timeFrame}/`)
                 .then(response => response.json())
                 .then(data => {
@@ -164,17 +176,47 @@
                 .catch(error => console.error('Error fetching chart data:', error));
         }
 
+        function fetchNews(cryptoName) {
+            if (!cryptoName) {
+                console.error('Invalid crypto name for news');
+                return;
+            }
+
+            fetch(`https://newsdata.io/api/1/news?apikey=pub_5202571ec2f7a093cbd2304c4c8981bf7f1a2&q=${cryptoName}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.results || data.results.length === 0) {
+                        console.warn("No news articles found.");
+                        return;
+                    }
+
+                    var newsContainer = document.getElementById('newsContainer');
+                    newsContainer.innerHTML = '';
+
+                    data.results.slice(0, 5).forEach(article => {
+                        var articleElement = document.createElement('div');
+                        articleElement.classList.add('bg-white', 'p-4', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200');
+                        
+                        articleElement.innerHTML = `
+                            <img src="${article.image_url || 'https://via.placeholder.com/150'}" alt="${article.title}" class="w-full h-32 object-cover mb-4 rounded-md">
+                            <h3 class="text-lg font-semibold mb-2">${article.title}</h3>
+                            <p class="text-sm mb-2">${article.description || 'No description available'}</p>
+                            <a href="${article.url}" target="_blank" class="text-blue-500 hover:underline">Read more</a>
+                        `;
+
+                        newsContainer.appendChild(articleElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching news:', error));
+        }
+
         // Toggle visibility
         document.getElementById('showPrice').addEventListener('change', updateChartVisibility);
         document.getElementById('showVolume').addEventListener('change', updateChartVisibility);
-        // Add RSI toggle if you implement RSI data
-        // document.getElementById('showRSI').addEventListener('change', updateChartVisibility);
 
         function updateChartVisibility() {
             chart.data.datasets[0].hidden = !document.getElementById('showPrice').checked;
             chart.data.datasets[1].hidden = !document.getElementById('showVolume').checked;
-            // Add RSI visibility control if needed
-            // chart.data.datasets[2].hidden = !document.getElementById('showRSI').checked;
             chart.update();
         }
 
@@ -187,4 +229,5 @@
         }
     </script>
 </body>
+
 </html>
